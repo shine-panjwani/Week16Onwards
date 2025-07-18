@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Users apne profile banaate hain (with profile picture, bio,
+//  etc.). Har user posts create karta hai. Posts ke andar multiple
+//   images ho sakti hain. Users ek doosre ko follow karte hain. Har 
+//   post ko like aur comment bhi kiya ja sakta hai. Comments me reply
+//    bhi possible hai. Har user ka ek notification setting hota hai.
+model User{
+  id Int @id @default(autoincrement())
+  username String
+  email String
+  password String
+  profile Profile?
+  post Post[]
+  notification Notification?
+  postLike PostLike[]
+  postComment PostComment[]
+  follower Follow[] @relation("FollowerRelation")
+  following Follow[] @relation("FollowingRelation")
+
+}
+model Profile{
+  id Int @id @default(autoincrement())
+  userId Int @unique
+  user User @relation(fields: [userId], references: [id])
+}
+model Post{
+  id Int @id @default(autoincrement())
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+  postImg PostImg[]
+  postLike PostLike[]
+  postComment PostComment[]
+}
+model PostImg{
+  id Int @id @default(autoincrement())
+  postId Int 
+  post Post @relation(fields: [postId],references: [id])
+}
+model PostLike{
+  id Int @id @default(autoincrement())
+  postId Int
+  userId Int
+  post Post @relation(fields: [postId],references: [id])
+  user User @relation(fields: [userId], references: [id])
+}
+model PostComment{
+  id Int @id @default(autoincrement())
+  content String
+  postId Int
+  post Post @relation(fields: [postId], references: [id])
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+  parentId Int?
+  parent PostComment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies PostComment[] @relation("CommentReplies")
+}
+model Notification{
+  id Int @id @default(autoincrement())
+  userId Int @unique
+  user User @relation(fields: [userId], references: [id])
+}
+model Follow{
+  id Int @id @default(autoincrement())
+  followersId Int
+  followingId Int
+  follower User @relation("FollowerRelation",fields: [followersId], references: [id])
+  following User @relation("FollowingRelation", fields: [followingId], references: [id])
+}
